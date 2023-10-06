@@ -1,0 +1,13 @@
+# Ignore files and folders for Nest.js (server)
+/server/node_modules/
+/server/dist/
+/server/.env
+
+# Ignore files and folders for Next.js (web)
+/web/node_modules/
+/web/.next/
+/web/.env
+
+# Commonly ignored files and folders
+/node_modules/
+/.env
