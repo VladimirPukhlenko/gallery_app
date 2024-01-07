@@ -1,29 +1,37 @@
-import { Module, UseGuards } from '@nestjs/common';
-
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
-import { MailModule } from './mail/mail.module';
-import { TokensModule } from './tokens/tokens.module';
 import { ImagesModule } from './images/images.module';
-import configuration from './config/configuration';
-import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from './auth/auth.module';
 import { AlbumsModule } from './albums/albums.module';
+import { mailerConfig } from './configs/mailer.config';
+import { env } from './configs/env.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [configuration],
+      isGlobal: true,
+      load: [env],
     }),
-    MongooseModule.forRoot(process.env.MONGODB_URL),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get('DB.MONGODB_URL'),
+      }),
+    }),
+    MailerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: mailerConfig,
+    }),
     AuthModule,
     UsersModule,
-    MailModule,
-    TokensModule,
     ImagesModule,
     AlbumsModule,
   ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

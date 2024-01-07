@@ -1,8 +1,8 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail()
+  @IsEmail({}, { message: 'Please enter a valid email address' })
   readonly email: string;
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Password field cannot be empty' })
   readonly password: string;
 }

@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "npm-run-all --parallel next nest",
-    "next": "cd web && npm run dev",
-    "nest": "cd server && npm run dev"
+    "dev": "npm-run-all --parallel next nest",
+    "build": "npm-run-all --parallel nest:build next:build",
+    "start": "npm-run-all --parallel nest:start next:start",
+    "next": "cd client && npm run dev",
+    "nest": "cd server && npm run start:dev",
+    "next:build": "cd client && npm run build",
+    "nest:build": "cd server && npm run build",
+    "next:start": "cd client && npm run start",
+    "nest:start": "cd server && npm run start"
   },
   "author": "",
   "license": "ISC"

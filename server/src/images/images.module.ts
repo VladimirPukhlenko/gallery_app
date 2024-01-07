@@ -1,26 +1,32 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import { ImagesService } from './images.service';
 import { ImagesController } from './images.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
-import configService from '../config/configuration';
-
-import { UsersModule } from 'src/users/users.module';
+import { UserImagesService } from './services/user-images.service';
+import { ImageManagementService } from './services/image-management.service';
 import { ImageSchema, Image } from 'src/schemas/Image.schema';
-import { MongooseModule } from '@nestjs/mongoose';
-import { JwtAccessStrategy } from 'src/strategies/JwtAccessStrategy';
-import { Album, AlbumSchema } from 'src/schemas/Album.schema';
-import { User, UserSchema } from 'src/schemas/User.schema';
+import { UsersModule } from 'src/users/users.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { AlbumsModule } from 'src/albums/albums.module';
+import { CloudinaryService } from './services/cloudinary.service';
+import { CloudinaryProvider } from './providers/cloudinary.provider';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Image.name, schema: ImageSchema }]),
-    MongooseModule.forFeature([{ name: Album.name, schema: AlbumSchema }]),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    ConfigModule,
-    UsersModule,
+    forwardRef(() => AlbumsModule),
+    AuthModule,
+    forwardRef(() => UsersModule),
   ],
-  providers: [ImagesService, JwtAccessStrategy],
+  providers: [
+    ImagesService,
+    UserImagesService,
+    ImageManagementService,
+    CloudinaryService,
+    CloudinaryProvider,
+  ],
   controllers: [ImagesController],
+  exports: [CloudinaryService],
 })
 export class ImagesModule {}

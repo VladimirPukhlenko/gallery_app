@@ -1,19 +1,23 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
+import mongoose, { Document, SchemaTypes, Types, model } from 'mongoose';
+import { Album } from './Album.schema';
 import { Image } from './Image.schema';
 
-export type ImageDocument = mongoose.HydratedDocument<User>;
+export type UserDocument = mongoose.HydratedDocument<User>;
 
 @Schema({ timestamps: false, collection: 'users' })
-export class User {
-  _id: mongoose.ObjectId;
-
+export class User extends Document {
   @Prop()
   fullName: string;
 
-  @Prop()
-  picture: string;
+  @Prop({
+    default: { url: '', cloudinaryId: '' },
+    type: {
+      url: String,
+      cloudinaryId: String,
+    },
+  })
+  picture: { url: string; cloudinaryId: string };
 
   @Prop()
   email: string;
@@ -21,19 +25,19 @@ export class User {
   @Prop()
   password: string;
 
-  // @Prop({ ref: 'Album', type: [mongoose.Schema.Types.ObjectId], default: [] })
-  // albums: mongoose.ObjectId[];
+  @Prop({ ref: Album.name, type: [SchemaTypes.ObjectId], default: [] })
+  albums: Types.ObjectId[];
 
-  @Prop({ ref: 'Image', type: [mongoose.Schema.Types.ObjectId], default: [] })
-  images: mongoose.ObjectId[];
-
-  @Prop({ ref: 'Image', type: [mongoose.Schema.Types.ObjectId], default: [] })
-  favorites: mongoose.ObjectId[];
+  @Prop({ ref: Image.name, type: [SchemaTypes.ObjectId], default: [] })
+  favorites: Types.ObjectId[];
 
   @Prop()
   refresh_token: string;
 
-  @Prop({ immutable: true, default: Date.now })
+  @Prop({ ref: Image.name, type: [SchemaTypes.ObjectId], default: [] })
+  images: Types.ObjectId[];
+
+  @Prop({ default: Date.now })
   createdAt: Date;
 }
 

@@ -1,19 +1,33 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import { User } from './User.schema';
+import mongoose, { SchemaTypes, Types, Document } from 'mongoose';
+
+import {
+  handleImageDelete,
+  handleImageSave,
+} from './middlewares/image.middlware';
 
 export type ImageDocument = mongoose.HydratedDocument<Image>;
 @Schema({ timestamps: false, collection: 'images' })
-export class Image {
-  _id: mongoose.ObjectId;
+export class Image extends Document {
+  @Prop({ ref: 'User', type: SchemaTypes.ObjectId })
+  creator: Types.ObjectId;
 
-  @Prop({ ref: 'User', type: mongoose.Schema.Types.ObjectId })
-  creator: mongoose.ObjectId;
   @Prop()
   link: string;
+
+  @Prop({ immutable: true })
+  cloudinaryId: string;
+
   @Prop({ immutable: true, default: Date.now })
   createdAt: Date;
 }
 
 export const ImageSchema = SchemaFactory.createForClass(Image);
+
+ImageSchema.post('save', handleImageSave);
+
+ImageSchema.post(
+  'deleteOne',
+  { document: true, query: false },
+  handleImageDelete,
+);

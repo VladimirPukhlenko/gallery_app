@@ -1,30 +1,34 @@
 import {
+  Body,
   Controller,
   Get,
-  Inject,
+  Patch,
   Post,
   Req,
-  Res,
   UseGuards,
 } from '@nestjs/common';
+
+import { AuthorizedRequest } from 'types/request.interface';
 import { UsersService } from './users.service';
-import { UsersRepository } from './users.repository';
-import { JwtGuardAccess } from 'src/guards/jwt-access.guard';
-import { ConfigService } from '@nestjs/config';
-import { AuthorizedRequest } from 'src/types/types';
+import { JwtGuardAccess } from 'src/auth/guards/jwt-access.guard';
+import { EditUserDto } from './dto/edit-user.dto';
 
 @UseGuards(JwtGuardAccess)
 @Controller('users')
 export class UsersController {
-  constructor(
-    private usersService: UsersService,
-    @Inject(ConfigService)
-    private readonly configService: ConfigService,
-    private usersRepository: UsersRepository,
-  ) {}
+  constructor(private usersService: UsersService) {}
+  @Get('me')
+  async getUser(@Req() req: AuthorizedRequest) {
+    const fullUser = await this.usersService.findById(req.user._id);
+    const { password, refresh_token, ...user } = fullUser.toObject();
+    return user;
+  }
 
-  @Get()
-  async getData(@Req() req: AuthorizedRequest) {
-    return this.usersService.getAllUsers();
+  @Patch('edit')
+  async editUser(
+    @Req() req: AuthorizedRequest,
+    @Body() editUserDto: EditUserDto,
+  ) {
+    return await this.usersService.editUser(req.user._id, editUserDto);
   }
 }

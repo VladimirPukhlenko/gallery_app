@@ -1,13 +1,15 @@
 # Ignore files and folders for Nest.js (server)
-/server/node_modules/
-/server/dist/
+/server/node_modules
+/server/dist
 /server/.env
+/server/.idea
 
-# Ignore files and folders for Next.js (web)
-/web/node_modules/
-/web/.next/
-/web/.env
+# Ignore files and folders for Next.js (client)
+/client/node_modules
+/client/.next
+/client/.env
+/client/.idea
 
 # Commonly ignored files and folders
-/node_modules/
+/node_modules
 /.env

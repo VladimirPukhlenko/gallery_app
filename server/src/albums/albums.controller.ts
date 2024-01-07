@@ -4,35 +4,39 @@ import {
   Delete,
   Get,
   Param,
+  ParseBoolPipe,
   Patch,
   Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtGuardAccess } from 'src/guards/jwt-access.guard';
-import { AuthorizedRequest } from 'src/types/types';
+import { AuthorizedRequest } from 'types/request.interface';
 import { AlbumsService } from './albums.service';
+import { JwtGuardAccess } from 'src/auth/guards/jwt-access.guard';
 import { CreateAlbumDto } from './dto/create-album.dto';
-import { RenameAlbumDto } from './dto/rename-album.dto';
 import { AddImageToAlbumDto } from './dto/add-image-to-album.dto';
+import { RenameAlbumDto } from './dto/rename-album.dto';
 
 @UseGuards(JwtGuardAccess)
 @Controller('albums')
 export class AlbumsController {
   constructor(private albumsService: AlbumsService) {}
-
   @Get()
   async getAllUserAlbums(
     @Req() req: AuthorizedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('populate') populate?: boolean,
+    @Query('populateLimit') populateLimit?: number,
   ) {
-    return await this.albumsService.getAllUserAlbums({
-      page: +page || 1,
-      limit: +limit || 5,
-      userId: req.user._id,
-    });
+    return await this.albumsService.getAllUserAlbums(
+      +page || 1,
+      +limit || 100,
+      req.user._id,
+      populate,
+      +populateLimit || 5,
+    );
   }
   @Post()
   async createAlbum(
@@ -44,21 +48,6 @@ export class AlbumsController {
       req.user._id,
     );
   }
-  @Post('/:albumId/images')
-  async addImageToAlbum(
-    @Req() req: AuthorizedRequest,
-    @Body() addImageToAlbumDto: AddImageToAlbumDto,
-    @Param('albumId') albumId: string,
-  ) {
-    const { imageId } = addImageToAlbumDto;
-    await this.albumsService.updateAlbumImages({
-      albumId,
-      userId: req.user._id,
-      imageId,
-      action: 'add',
-    });
-  }
-
   @Patch('/:albumId')
   async renameAlbum(
     @Req() req: AuthorizedRequest,
@@ -71,22 +60,19 @@ export class AlbumsController {
       renameAlbumDto.newName,
     );
   }
-
-  @Delete('/:albumId/images/:imageId')
-  async deleteImageFromAlbum(
+  @Patch('/:albumId/images')
+  async imagesInAlbumToggle(
     @Req() req: AuthorizedRequest,
+    @Body() addImageToAlbumDto: AddImageToAlbumDto,
     @Param('albumId') albumId: string,
-    @Param('imageId') imageId: string,
   ) {
-    await this.albumsService.updateAlbumImages({
+    const { imageId } = addImageToAlbumDto;
+    await this.albumsService.imagesInAlbumToggle(
       albumId,
-      userId: req.user._id,
+      req.user._id,
       imageId,
-      action: 'delete',
-    });
-    return {
-      message: 'success',
-    };
+    );
+    return { message: 'success' };
   }
   @Delete('/:albumId')
   async deleteAlbum(
@@ -94,8 +80,13 @@ export class AlbumsController {
     @Param('albumId') albumId: string,
   ) {
     await this.albumsService.deleteAlbum(albumId, req.user._id);
-    return {
-      message: 'success',
-    };
+    return { message: 'success' };
+  }
+  @Get('/:albumId')
+  async getSingleUserId(
+    @Req() req: AuthorizedRequest,
+    @Param('albumId') albumId: string,
+  ) {
+    return await this.albumsService.getSingleUserAlbum(albumId, req.user._id);
   }
 }

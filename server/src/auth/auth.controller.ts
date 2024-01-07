@@ -1,3 +1,4 @@
+import { Keys } from './../../types/Keys.enum';
 import {
   Body,
   Controller,
@@ -9,30 +10,29 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
+import { RegistrationUserDto } from './dto/registration-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { ConfigService } from '@nestjs/config';
-import { JwtGuardRefresh } from '../guards/jwt-refresh.guard';
-import { AuthorizedRequest, RecoveryRequest } from 'src/types/types';
-import { RecoveryDto } from './dto/recovery.dto';
-import { JwtGuardRecovery } from 'src/guards/jwt-recovery.guard';
-import { RecoveryConfirmDto } from './dto/recovery-confirmation.dto';
-import { TokensService } from 'src/tokens/tokens.service';
-import { User } from 'src/schemas/User.schema';
+import { Response } from 'express';
+import { TokenService } from './services/token.service';
+
+import { AuthorizedRequest, RecoveryRequest } from 'types/request.interface';
+import { JwtGuardRefresh } from './guards/jwt-refresh.guard';
 import { Types } from 'mongoose';
+import { RecoveryConfirmDto } from './dto/recovery-confirmation.dto';
+import { JwtGuardRecovery } from './guards/jwt-recovery.guard';
+import { RecoveryDto } from './dto/recovery.dto';
+import { MailService } from './services/mail.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private readonly tokensService: TokensService,
+    private tokenService: TokenService,
   ) {}
-
   @Post('registration')
-  async registration(@Body() createUserDto: CreateUserDto) {
-    return await this.authService.registration(createUserDto);
+  async registration(@Body() registrationUserDto: RegistrationUserDto) {
+    return await this.authService.registration(registrationUserDto);
   }
 
   @Post('login')
@@ -40,24 +40,22 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const { access_token, refresh_token } =
-      await this.authService.login(loginDto);
+    const { user, tokens } = await this.authService.login(loginDto);
 
-    response.cookie('access_token', access_token, {
-      httpOnly: this.tokensService.isProduction(),
-      expires: this.tokensService.getExpAccessToken(),
+    response.cookie(Keys.ACCESS_TOKEN, tokens.access_token, {
+      httpOnly: this.tokenService.isProduction(),
+      expires: this.tokenService.getExpAccessToken(),
     });
-    response.cookie('refresh_token', refresh_token, {
-      httpOnly: this.tokensService.isProduction(),
+    response.cookie(Keys.REFRESH_TOKEN, tokens.refresh_token, {
+      httpOnly: this.tokenService.isProduction(),
     });
-
-    return { message: 'success' };
+    return user;
   }
 
   @Get('logout')
   async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('access_token');
-    response.clearCookie('refresh_token');
+    response.clearCookie(Keys.ACCESS_TOKEN);
+    response.clearCookie(Keys.REFRESH_TOKEN);
     return { message: 'success' };
   }
 
@@ -66,17 +64,15 @@ export class AuthController {
   async refresh(
     @Res({ passthrough: true }) response: Response,
     @Req() request: AuthorizedRequest,
-  ): Promise<{ message: string }> {
-    const { _id, email, fullName } = request.user;
-    const newAccessToken = await this.tokensService.generateAccessToken({
-      _id,
-      email,
-      fullName,
-    } as unknown as User);
+  ) {
+    const newAccessToken = await this.tokenService.generateToken(
+      { ...request.user, _id: new Types.ObjectId(request.user._id) },
+      'access',
+    );
 
-    response.cookie('access_token', newAccessToken, {
-      httpOnly: this.tokensService.isProduction(),
-      expires: this.tokensService.getExpAccessToken(),
+    response.cookie(Keys.ACCESS_TOKEN, newAccessToken, {
+      httpOnly: this.tokenService.isProduction(),
+      expires: this.tokenService.getExpAccessToken(),
     });
 
     return { message: 'success' };
@@ -90,16 +86,15 @@ export class AuthController {
   ) {
     const recoveryToken = await this.authService.recovery(recoveryDto);
 
-    response.cookie('recovery_token', recoveryToken, {
-      httpOnly: this.tokensService.isProduction(),
-      expires: this.tokensService.getExpRecoveryToken(),
+    response.cookie(Keys.RECOVERY_TOKEN, recoveryToken, {
+      httpOnly: this.tokenService.isProduction(),
+      expires: this.tokenService.getExpRecoveryToken(),
     });
 
     return {
       message: 'success',
     };
   }
-
   @UseGuards(JwtGuardRecovery)
   @Post('recovery/confirmation')
   async confirmation(
@@ -107,12 +102,15 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Body() recoveryConfirmDto: RecoveryConfirmDto,
   ) {
-    await this.authService.confirmation(recoveryConfirmDto, request.user);
+    await this.authService.recoveryConfirmation(
+      recoveryConfirmDto,
+      request.user,
+    );
 
-    response.clearCookie('recovery_token');
-    response.clearCookie('access_token');
-    response.clearCookie('refresh_token');
-
+    response.clearCookie(Keys.RECOVERY_TOKEN);
+    response.clearCookie(Keys.ACCESS_TOKEN);
+    response.clearCookie(Keys.REFRESH_TOKEN);
+    Keys.RECOVERY_TOKEN;
     return {
       message: 'success',
     };

@@ -1,33 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import { UsersRepository } from './users.repository';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ObjectId } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
+import { RegistrationUserDto } from 'src/auth/dto/registration-user.dto';
+import { CryptoService } from 'src/auth/services/crypto.service';
+import { User, UserDocument } from 'src/schemas/User.schema';
+import { EditUserDto } from './dto/edit-user.dto';
+import { use } from 'passport';
+import { CloudinaryService } from 'src/images/services/cloudinary.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private usersRepository: UsersRepository) {}
-  async findByEmail(email: string) {
-    return this.usersRepository.findUserByEmail(email);
+  constructor(
+    @InjectModel(User.name)
+    private userModel: Model<UserDocument>,
+    private cryptoService: CryptoService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
+
+  findByEmail(email: string) {
+    return this.userModel.findOne({ email });
   }
-  async getAllUsers() {
-    return this.usersRepository.getAllUsers();
+  findById(id: string) {
+    return this.userModel.findById(id);
   }
-  async createUser(createUserDto: CreateUserDto) {
-    return await this.usersRepository.createUser(createUserDto);
+  updateById(userId: string, data: Partial<User>) {
+    return this.userModel.findByIdAndUpdate(userId, data);
   }
-  async findUserById(id: string) {
-    return await this.usersRepository.findUserById(id);
+
+  async editUser(userId: string, editUserDto: EditUserDto) {
+    const user = await this.findById(userId);
+    const { cloudinaryId } = user.picture;
+    if (cloudinaryId) {
+      await this.cloudinaryService.removeImageFromCloud(cloudinaryId);
+    }
+    return await user.updateOne(editUserDto);
   }
-  async updateUserPassword(userId: string, password: string) {
-    await this.usersRepository.updateUserPassword(userId, password);
-  }
-  async addToImagesArray(userId: string, imageId: string) {
-    await this.usersRepository.addToImagesArray(userId, imageId);
-  }
-  async updateFavoritesArrayToggle(userId: string, imageId: string) {
-    await this.usersRepository.updateFavoritesArrayToggle(userId, imageId);
-  }
-  async removeImageRefs(imageId: string) {
-    await this.usersRepository.removeImageRefs(imageId);
+
+  async createUser(registrationUserDto: RegistrationUserDto) {
+    const hashedPassword = await this.cryptoService.hashData(
+      registrationUserDto.password,
+    );
+
+    const newUser = new this.userModel({
+      ...registrationUserDto,
+      password: hashedPassword,
+    });
+    return newUser.save();
   }
 }

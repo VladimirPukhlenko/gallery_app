@@ -1,96 +1,61 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, ObjectId, Schema } from 'mongoose';
-import { Album } from 'src/schemas/Album.schema';
-import { User } from 'src/schemas/User.schema';
-import { getAllUserAlbumsArgs, updateAlbumImagesArgs } from 'src/types/types';
+import mongoose, { Model } from 'mongoose';
+
+import { Album, AlbumDocument } from 'src/schemas/Album.schema';
+import { UserAlbumsService } from './services/user-albums.service';
+import { AlbumManagementService } from './services/album-management.service';
 
 @Injectable()
 export class AlbumsService {
   constructor(
     @InjectModel(Album.name)
-    private albumModel: Model<Album>,
-    @InjectModel(User.name)
-    private userModel: Model<User>,
+    private imageModel: Model<AlbumDocument>,
+    private userAlbumsService: UserAlbumsService,
+    private albumManagementService: AlbumManagementService,
   ) {}
 
-  async getAllUserAlbums({ userId, page, limit }: getAllUserAlbumsArgs) {
-    const skip = limit * (page - 1);
-    const albums = await this.albumModel
-      .find({ author: userId })
-      .limit(limit)
-      .skip(skip);
-
-    const totalItems = await this.albumModel.countDocuments({
-      author: userId,
-    });
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      currentPage: page,
-      totalPages,
-      totalItems,
-      data: albums,
-    };
+  findById(albumsId: string) {
+    return this.imageModel.findById(albumsId);
+  }
+  findOne(data: any) {
+    return this.imageModel.findOne(data);
   }
 
-  async createAlbum(name: string, userId: string) {
-    const newAlbum = new this.albumModel({
-      name,
-      author: userId,
-    });
-    return await newAlbum.save();
-  }
-  async updateAlbumImages({
-    albumId,
-    userId,
-    imageId,
-    action,
-  }: updateAlbumImagesArgs) {
-    const requredAlbum = await this.albumModel.findById(albumId);
-
-    if (!requredAlbum || requredAlbum.author.toString() !== userId) {
-      throw new ForbiddenException();
-    }
-
-    if (action === 'add') {
-      // temporarily
-      requredAlbum.images.push(imageId as unknown as ObjectId);
-    } else if (action === 'delete') {
-      requredAlbum.images = requredAlbum.images.filter(
-        (id) => id.toString() !== imageId,
-      );
-    } else {
-      throw new BadRequestException('Invalid parameters');
-    }
-
-    await requredAlbum.save();
+  getAllUserAlbums(
+    page: number,
+    limit: number,
+    userId: string,
+    populate: boolean,
+    populateLimit: number,
+  ) {
+    return this.userAlbumsService.getAllUserAlbums(
+      page,
+      limit,
+      userId,
+      populate,
+      populateLimit,
+    );
   }
 
-  async renameAlbum(albumId: string, userId: string, newName: string) {
-    const requredAlbum = await this.albumModel.findById(albumId);
-    if (!requredAlbum || requredAlbum.author.toString() !== userId) {
-      throw new ForbiddenException();
-    }
-    requredAlbum.name = newName;
-    return await requredAlbum.save();
+  createAlbum(name: string, userId: string) {
+    return this.albumManagementService.createAlbum(name, userId);
   }
 
-  async deleteAlbum(albumId: string, userId: string) {
-    const requredAlbum = await this.albumModel.findById(albumId);
-    if (!requredAlbum || requredAlbum.author.toString() !== userId) {
-      throw new ForbiddenException();
-    }
-    const result = await this.albumModel.findOneAndDelete({
-      _id: albumId,
-      author: userId,
-    });
-    if (!result) {
-      throw new ForbiddenException();
-    }
+  renameAlbum(albumId: string, userId: string, newName: string) {
+    return this.albumManagementService.renameAlbum(albumId, userId, newName);
+  }
+  deleteAlbum(albumId: string, userId: string) {
+    return this.albumManagementService.deleteAlbum(albumId, userId);
+  }
+  getSingleUserAlbum(albumId: string, userId: string) {
+    return this.userAlbumsService.getSingleUserAlbum(albumId, userId);
+  }
+  imagesInAlbumToggle(albumId: string, userId: string, imageId: string) {
+    return this.albumManagementService.imagesInAlbumToggle(
+      albumId,
+      userId,
+      imageId,
+    );
   }
 }
