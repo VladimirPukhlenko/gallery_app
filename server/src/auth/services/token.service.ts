@@ -2,10 +2,16 @@ import { Keys } from './../../../types/Keys.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/schemas/User.schema';
+import { Types } from 'mongoose';
 import { UsersService } from 'src/users/users.service';
 import { v4 as uuidv4 } from 'uuid';
 
+type UserPayload = {
+  email: string;
+  fullName: string;
+  _id: Types.ObjectId;
+  activeRefreshTokenId?: string;
+};
 @Injectable()
 export class TokenService {
   constructor(
@@ -15,42 +21,52 @@ export class TokenService {
     private usersService: UsersService,
   ) {}
 
-  async generateToken(
-    user: Pick<User, 'email' | 'fullName' | '_id'>,
-    tokenType: 'access' | 'refresh',
+  async generateToken<T extends 'access' | 'refresh'>(
+    tokenType: T,
+    user: T extends 'access' ? UserPayload : Required<UserPayload>,
   ) {
-    const key = {
-      access: Keys.JWT_KEY_ACCESS,
-      refresh: Keys.JWT_KEY_REFRESH,
+    const { email, fullName, _id, activeRefreshTokenId } = user;
+
+    const tokensData = {
+      access: {
+        key: Keys.JWT_KEY_ACCESS,
+        expiresIn: this.getExpAccessToken(),
+        payload: { email, fullName, _id },
+      },
+      refresh: {
+        key: Keys.JWT_KEY_REFRESH,
+        expiresIn: this.getExpRefreshToken(),
+        payload: { email, fullName, _id, activeRefreshTokenId },
+      },
     };
 
-    const expiresIn = tokenType === 'access' ? '50m' : '30d';
-
-    const { email, fullName, _id } = user;
-    const payload = { email, fullName, _id };
-
-    const token = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get(key[tokenType]),
-      expiresIn,
-    });
-    if (tokenType === 'refresh') {
-      await this.updateRefreshToken(_id.toString(), token);
-    }
+    const token = await this.jwtService.signAsync(
+      tokensData[tokenType].payload,
+      {
+        secret: this.configService.get(tokensData[tokenType].key),
+        expiresIn: tokensData[tokenType].expiresIn,
+      },
+    );
     return token;
   }
 
-  public async generateRecoveryToken(keyObj: { key: string; _id: string }) {
+  async generateRecoveryToken(keyObj: { key: string; _id: string }) {
     return await this.jwtService.signAsync(keyObj, {
       secret: this.configService.get<string>(Keys.JWT_KEY_RECOVERY),
       expiresIn: '1h',
     });
   }
 
-  async updateRefreshToken(userId: string, token: string) {
-    await this.usersService.updateById(userId, { refresh_token: token });
+  async updateActiveRefreshTokenId(
+    userId: string,
+    activeRefreshTokenId: string,
+  ) {
+    await this.usersService.updateById(userId, {
+      activeRefreshTokenId: activeRefreshTokenId,
+    });
   }
 
-  public async verifyToken<T>(token: string, secret: string): Promise<T> {
+  async verifyToken<T>(token: string, secret: string): Promise<T> {
     const data = await this.jwtService.verifyAsync(token, {
       secret: this.configService.get<string>(secret),
     });
@@ -68,18 +84,35 @@ export class TokenService {
     }
   }
 
-  getExpAccessToken() {
-    return new Date(new Date().getTime() + 50 * 60 * 1000); // 50min
-  }
-  getExpRecoveryToken() {
-    return new Date(new Date().getTime() + 60 * 60 * 1000); // 1h
-  }
-
-  isProduction() {
-    return this.configService.get('NODE_ENV') === 'production';
-  }
-
   generateRecoveryKey(length: number = 5) {
     return uuidv4().slice(0, length).toLowerCase();
+  }
+  generateUuid() {
+    return uuidv4();
+  }
+
+  getExpAccessToken(expType: 'str' | 'msec' = 'str') {
+    return {
+      str: this.configService.get('TOKENS.ACCESS_TOKEN_EXP'),
+      msec:
+        Date.now() + +this.configService.get('TOKENS.ACCESS_TOKEN_EXP_MSEC'),
+    }[expType];
+  }
+  getExpRecoveryToken(expType: 'str' | 'msec' = 'str') {
+    return {
+      str: this.configService.get('TOKENS.RECOVERY_TOKEN_EXP'),
+      msec:
+        Date.now() + +this.configService.get('TOKENS.RECOVERY_TOKEN_EXP_MSEC'),
+    }[expType];
+  }
+  getExpRefreshToken(expType: 'str' | 'msec' = 'str') {
+    return {
+      str: this.configService.get('TOKENS.REFRESH_TOKEN_EXP'),
+      msec:
+        Date.now() + +this.configService.get('TOKENS.REFRESH_TOKEN_EXP_MSEC'),
+    }[expType];
+  }
+  isProduction() {
+    return this.configService.get('NODE_ENV') === 'production';
   }
 }

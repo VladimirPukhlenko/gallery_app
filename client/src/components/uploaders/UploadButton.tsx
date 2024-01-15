@@ -5,13 +5,13 @@ import { Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useToast } from "../ui/use-toast";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
 import { IImageItem } from "@/types/image.interface";
 import { CloudinaryUploadResult } from "@/types/cloudinaryUploadResult.interface";
 
 const UploadButton = () => {
-  const { user } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
 
   if (!user) return null;
@@ -22,6 +22,7 @@ const UploadButton = () => {
     });
     router.refresh();
   };
+
   return (
     <Button asChild>
       <CldUploadButton

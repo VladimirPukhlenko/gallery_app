@@ -11,10 +11,10 @@ import AvatarComponent from "./Avatar";
 import { FC } from "react";
 import LogoutButton from "../auth/LogoutButton";
 import LoginModal from "../auth/LoginModal";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 const AvatarMenu: FC = () => {
-  const { user, setUser } = useUser();
+  const { user, setUser } = useAuth();
 
   if (!user) {
     return <LoginModal />;

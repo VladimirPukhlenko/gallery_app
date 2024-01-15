@@ -22,17 +22,8 @@ export class RegistrationService {
     }
 
     const newUser = await this.usersService.createUser(registrationUserDto);
-    const refreshToken = await this.tokenService.generateToken(
-      newUser,
-      'refresh',
-    );
 
-    await this.tokenService.updateRefreshToken(
-      newUser._id.toString(),
-      refreshToken,
-    );
-
-    const { password, ...user } = newUser.toObject();
+    const { password, activeRefreshTokenId, ...user } = newUser.toObject();
 
     return user;
   }

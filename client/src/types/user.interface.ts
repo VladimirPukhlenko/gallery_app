@@ -13,3 +13,11 @@ export interface User {
   __v: number;
   _id: string;
 }
+
+export interface LoginUser {
+  user: User;
+  tokens: {
+    access_token: string;
+    refresh_token: string;
+  };
+}

@@ -5,17 +5,19 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
+import { setCookie } from "cookies-next";
 
 import { Input } from "../ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { TooltipLoginHelp } from "./LoginHelp";
 import { ErrorRes } from "@/types/error.interface";
-import { User } from "@/types/user.interface";
+import { LoginUser } from "@/types/user.interface";
 import { LoginData, loginSchema } from "@/schemas/loginSchema";
+import { setToken } from "../../actions/cookiesManager";
 
 type Props = {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -23,7 +25,7 @@ type Props = {
 
 const LoginForm: FC<Props> = ({ setIsOpen }) => {
   const router = useRouter();
-  const { setUser } = useUser();
+  const { setUser } = useAuth();
   const { toast } = useToast();
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -47,13 +49,18 @@ const LoginForm: FC<Props> = ({ setIsOpen }) => {
   });
 
   const { ref, ...rest } = register("password");
+
   const onSubmit = async (data: LoginData) => {
     try {
-      const { data: user } = await AxiosInstanceClient.post<User>(
+      const { data: loginResData } = await AxiosInstanceClient.post<LoginUser>(
         "/auth/login",
         data
       );
-      setUser(user);
+      setUser(loginResData.user);
+
+      setToken("access_token_client", loginResData.tokens.access_token);
+      setToken("refresh_token_client", loginResData.tokens.refresh_token);
+
       setIsOpen(false);
       reset();
       router.refresh();

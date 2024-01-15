@@ -1,22 +1,21 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { headers } from "next/headers";
+import axios, { AxiosError, AxiosResponse } from "axios";
+import { cookies } from "next/headers";
 
 const API_URL = process.env.API_URL;
 const statusCode = [401, 402, 403];
 
-export const getAccessTokenServer = async (token?: string) => {
-  const cookies = headers().get("cookie");
-  // console.log(cookies);
+export const getAccessTokenServer = async () => {
+  const refresh_token = cookies().get("refresh_token_client");
   try {
-    const res = await axios.get(`${API_URL}/auth/refresh`, {
-      headers: { Cookie: token || cookies },
-    });
-    // console.log(res);
-    const access_token = res.headers["set-cookie"]?.join(" ");
-    // console.log(access_token);
+    const { data } = await axios.get<{ access_token: string }>(
+      `${API_URL}/auth/refresh`,
+      {
+        headers: { Cookie: `refresh_token=${refresh_token?.value}` },
+      }
+    );
+    const { access_token } = data;
     return access_token;
   } catch (error) {
-    // console.log(error);
     throw error;
   }
 };
@@ -37,11 +36,11 @@ AxiosInstanceServer.interceptors.response.use(
       const originalRequest = error.config;
       if (originalRequest) {
         try {
-          const access_token = await getAccessTokenServer();
-          if (access_token) {
-            originalRequest.headers["Cookie"] = access_token;
-            return axios.request(originalRequest);
-          }
+          originalRequest.headers.set(
+            "Cookie",
+            `access_token=${await getAccessTokenServer()}`
+          );
+          return axios.request(originalRequest);
         } catch (e) {
           return Promise.reject(error);
         }

@@ -9,11 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 import LoginForm from "./LoginForm";
-import { User } from "@/types/user.interface";
 
 const LoginModal: FC = () => {
   const [open, setIsOpen] = useState<boolean>(false);
-
   return (
     <Dialog open={open} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>

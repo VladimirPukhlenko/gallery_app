@@ -20,7 +20,7 @@ export class UsersController {
   @Get('me')
   async getUser(@Req() req: AuthorizedRequest) {
     const fullUser = await this.usersService.findById(req.user._id);
-    const { password, refresh_token, ...user } = fullUser.toObject();
+    const { password, activeRefreshTokenId, ...user } = fullUser.toObject();
     return user;
   }
 

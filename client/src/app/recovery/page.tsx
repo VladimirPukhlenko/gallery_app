@@ -25,7 +25,6 @@ const Recovery = () => {
     mode: "onTouched",
   });
   const onSubmit = async (data: recoveryData) => {
-    console.log(data);
     try {
       setIsLoading(true);
       await AxiosInstanceClient.post("auth/recovery", data);

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { CldUploadButton } from "next-cloudinary";
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { AxiosError } from "axios";
 import { useToast } from "../ui/use-toast";
 import { CloudinaryUploadResult } from "@/types/cloudinaryUploadResult.interface";
@@ -19,7 +19,7 @@ type Props = {
 };
 
 const UserBadge: FC<Props> = ({ user }) => {
-  const { setUser } = useUser();
+  const { setUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 

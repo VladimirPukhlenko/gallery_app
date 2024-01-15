@@ -4,14 +4,14 @@ import { LiaHeart, LiaHeartSolid } from "react-icons/lia";
 
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
 import { User } from "@/types/user.interface";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 type Props = {
   setIsDeleted: Dispatch<SetStateAction<boolean>>;
   imageId: string;
 };
 
 const FavoriteButton: FC<Props> = ({ setIsDeleted, imageId }) => {
-  const { user, setUser } = useUser();
+  const { user, setUser } = useAuth();
   const isUserLiked = user?.favorites.includes(imageId);
   const [isFavorite, setisFavorite] = useState(isUserLiked);
   const router = useRouter();

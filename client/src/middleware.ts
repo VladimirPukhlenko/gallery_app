@@ -4,7 +4,8 @@ import { NextRequest } from "next/server";
 const API_URL = process.env.API_URL;
 
 export async function middleware(request: NextRequest) {
-  const refresh_token = request.cookies.get("refresh_token")?.value || "";
+  const refresh_token =
+    request.cookies.get("refresh_token_client")?.value || "";
 
   const isValidUser = await refreshTokenVerification(refresh_token);
 
@@ -29,12 +30,12 @@ export const config = {
 
 const refreshTokenVerification = async (token: string) => {
   try {
-    const rest = await fetch(`${API_URL}/auth/refresh`, {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       headers: {
         Cookie: `refresh_token=${token};`,
       },
     });
-    return rest.status === 200;
+    return res.status === 200;
   } catch (e) {
     return false;
   }

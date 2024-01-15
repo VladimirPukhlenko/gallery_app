@@ -8,12 +8,13 @@ import { FetchRes } from "@/types/retch-res.interface";
 import { IImageItem } from "@/types/image.interface";
 import { getFormattedDate } from "@/utils/getFormattedDate";
 import NoContent from "@/components/placeholders/NoContent";
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const { data: albumInfo } = await AxiosInstanceServer.get<IAlbumItem>(
     `/albums/${params.id}`
-  );
+  ).catch(() => redirect("/"));
   return {
     title: `Gallery app | ${albumInfo.name}`,
   };
@@ -27,7 +28,7 @@ const SingleAlbum = async ({ params }: { params: { id: string } }) => {
   const limit = 8;
   const page = 1;
   const url = `/images/userImages?album=${params.id}&limit=${limit}&page=`;
-  const { data: albumData } = await AxiosInstanceServer.get<
+  const { data: albumImages } = await AxiosInstanceServer.get<
     FetchRes<IImageItem[]>
   >(url + page).catch(() => redirect("/"));
 
@@ -46,13 +47,13 @@ const SingleAlbum = async ({ params }: { params: { id: string } }) => {
             </h1>
           </div>
         </div>
-        {!albumData.data?.length ? (
+        {!albumImages.data?.length ? (
           <NoContent
             title="You don't have any images in this album."
             subtitle="To add one, please visit the gallery page."
           />
         ) : (
-          <ImagesList imagesData={albumData} url={url} albumId={params.id} />
+          <ImagesList imagesData={albumImages} url={url} albumId={params.id} />
         )}
       </section>
     </main>

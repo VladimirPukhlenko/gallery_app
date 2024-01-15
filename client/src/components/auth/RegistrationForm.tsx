@@ -68,9 +68,9 @@ const RegistrationForm: FC<Props> = ({ setSubmited }) => {
     <div>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col justify-start sm:justify-center  p-1 md:p-5 md:px-8"
+        className="flex flex-col justify-start sm:justify-center p-1 md:p-5 md:px-8"
       >
-        <div className="flex  flex-col justify-start sm:justify-center gap-4  flex-1  p-8 border shadow-xl rounded-md">
+        <div className="flex flex-col justify-start sm:justify-center gap-4 flex-1 p-8 border dark:border-neutral-600  shadow-xl rounded-md">
           <div className="flex flex-col  gap-4 ">
             <div className="flex justify-between">
               <Label htmlFor="fullName">Full name</Label>

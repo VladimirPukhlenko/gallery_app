@@ -5,6 +5,7 @@ import { Request } from 'express';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 
 import { JwtPayload } from 'types/JwtPayload.interface';
+import { Keys } from 'types/Keys.enum';
 
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(
@@ -22,16 +23,16 @@ export class JwtAccessStrategy extends PassportStrategy(
       secretOrKey: configService.get('TOKENS.JWT_KEY_ACCESS'),
     });
   }
-
   public static extractJwtFromCookie(request: Request) {
-    const token = request?.cookies['access_token'];
+    const token = request?.cookies[Keys.ACCESS_TOKEN];
 
     if (!token) {
       throw new ForbiddenException();
     }
     return token;
   }
-  async validate(payload: JwtPayload) {
+
+  validate(payload: JwtPayload) {
     return payload;
   }
 }

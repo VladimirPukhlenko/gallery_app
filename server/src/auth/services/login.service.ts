@@ -25,25 +25,20 @@ export class LoginService {
 
     const tokens = {
       access_token: await this.tokenService.generateToken(
-        existingUser,
         'access',
+        existingUser,
       ),
-      refresh_token: existingUser.refresh_token,
+      refresh_token: await this.tokenService.generateToken(
+        'refresh',
+        existingUser,
+      ),
     };
 
-    const tokenIsValid = await this.tokenService.refreshTokenIsValid(
-      existingUser.refresh_token,
-    );
-
-    if (!tokenIsValid) {
-      const newRefreshToken = await this.tokenService.generateToken(
-        existingUser,
-        'refresh',
-      );
-      tokens.refresh_token = newRefreshToken;
-    }
-
-    const { password: pass, refresh_token, ...user } = existingUser.toObject();
+    const {
+      password: pass,
+      activeRefreshTokenId,
+      ...user
+    } = existingUser.toObject();
     return {
       user,
       tokens,

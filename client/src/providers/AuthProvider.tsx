@@ -9,15 +9,14 @@ import {
   useState,
 } from "react";
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
-import { useRouter } from "next/navigation";
 import { User as UserType } from "../types/user.interface";
+import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
 type ContextData = {
   user: UserType | null;
   setUser: Dispatch<SetStateAction<UserType | null>>;
 };
 const UserContext = createContext<ContextData>({} as ContextData);
-
-export function AuthProvider({ children }: any) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<null | UserType>(null);
 
   useEffect(() => {
@@ -40,6 +39,6 @@ export function AuthProvider({ children }: any) {
   );
 }
 
-export function useUser() {
+export function useAuth() {
   return useContext(UserContext);
 }

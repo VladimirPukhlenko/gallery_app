@@ -7,13 +7,17 @@ export const env = () => ({
   DB: {
     MONGODB_URL: process.env.MONGODB_URL,
   },
+
   TOKENS: {
     JWT_KEY_ACCESS: process.env.JWT_KEY_ACCESS,
     ACCESS_TOKEN_EXP: process.env.ACCESS_TOKEN_EXP,
+    ACCESS_TOKEN_EXP_MSEC: process.env.ACCESS_TOKEN_EXP_MSEC,
     JWT_KEY_REFRESH: process.env.JWT_KEY_REFRESH,
     REFRESH_TOKEN_EXP: process.env.REFRESH_TOKEN_EXP,
+    REFRESH_TOKEN_EXP_MSEC: process.env.REFRESH_TOKEN_EXP_MSEC,
     JWT_KEY_RECOVERY: process.env.JWT_KEY_RECOVERY,
     RECOVERY_TOKEN_EXP: process.env.RECOVERY_TOKEN_EXP,
+    RECOVERY_TOKEN_EXP_MSEC: process.env.RECOVERY_TOKEN_EXP_MSEC,
   },
   MAILER: {
     EMAIL_HOST: process.env.EMAIL_HOST,

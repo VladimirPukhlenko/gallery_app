@@ -7,7 +7,7 @@ import ImageModal from "./ImageModal";
 import FavoriteButton from "./FavoriteButton";
 import ImageMenu from "./ImageMenu";
 import RemoveImageButton from "./RemoveImage";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { IImageItem } from "@/types/image.interface";
 import { IAlbumItem } from "@/types/album.interface";
 
@@ -19,7 +19,7 @@ type Props = {
 const ImageItem: FC<Props> = ({ imageItem, userAlbums, albumId }) => {
   const [isDeletedFromFavorites, setIsDeletedFromFavorites] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
-  const { user } = useUser();
+  const { user } = useAuth();
   const pathname = usePathname();
   const isFavoritePage = pathname === "/favorites";
 
@@ -37,7 +37,7 @@ const ImageItem: FC<Props> = ({ imageItem, userAlbums, albumId }) => {
           quality={100}
           alt="image"
           className="transition-opacity duration-500 opacity-0"
-          onLoadingComplete={(image) => image.classList.remove("opacity-0")}
+          onLoad={(image) => image.currentTarget.classList.remove("opacity-0")}
         />
         {user && (
           <>

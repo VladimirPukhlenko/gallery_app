@@ -24,13 +24,12 @@ type Props = {
 };
 const MobileAlbumMenu: FC<Props> = ({ allAlbums }) => {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-
   const albums = allAlbums.map((album) => ({
     value: album.name.toLowerCase(),
     label: album.name,
     id: album._id,
   }));
+  const [value, setValue] = useState(albums.at(0)?.value);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

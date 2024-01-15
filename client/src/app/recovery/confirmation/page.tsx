@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { AxiosInstanceClient } from "@/lib/axiosConfigClient";
 import { AxiosError } from "axios";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { useRef, useState } from "react";
 import { HiEye } from "react-icons/hi";
 import { ErrorRes } from "@/types/error.interface";
@@ -23,7 +23,7 @@ const Confirmation = ({
 }) => {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { setUser } = useUser();
+  const { setUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const toggleVisibilityAndFocus = () => {

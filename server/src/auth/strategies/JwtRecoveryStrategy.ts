@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy, ExtractJwt } from 'passport-jwt';
+import { Keys } from 'types/Keys.enum';
 
 export type JwtPayloadRecovery = {
   _id: string;
@@ -27,14 +28,16 @@ export class JwtRecoveryStrategy extends PassportStrategy(
     });
   }
 
-  static extractJwtFromCookie(request: Request) {
-    const token = request?.cookies['recovery_token'];
+  public static extractJwtFromCookie(request: Request) {
+    const token = request?.cookies[Keys.RECOVERY_TOKEN];
+
     if (!token) {
       throw new ForbiddenException();
     }
     return token;
   }
-  async validate(payload: JwtPayloadRecovery) {
+
+  validate(payload: JwtPayloadRecovery) {
     return payload;
   }
 }

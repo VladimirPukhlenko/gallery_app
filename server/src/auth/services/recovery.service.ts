@@ -56,7 +56,7 @@ export class RecoveryService {
 
     await this.usersService.updateById(user._id, {
       password: await this.cryptoService.hashData(password),
-      refresh_token: '',
+      activeRefreshTokenId: this.tokensSevice.generateUuid(),
     });
   }
 }

@@ -1,13 +1,17 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 
 const API_URL = process.env.API_URL;
 const statusCode = [401, 402, 403];
 
 const getAccessTokenClient = async () => {
   try {
-    await axios.get(`${API_URL}/auth/refresh`, {
-      withCredentials: true,
-    });
+    const { data } = await axios.get<{ access_token: string }>(
+      `${API_URL}/auth/refresh`,
+      {
+        withCredentials: true,
+      }
+    );
+    return data;
   } catch (error) {
     throw error;
   }

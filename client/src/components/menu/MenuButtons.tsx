@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { FC, use } from "react";
 import { usePathname } from "next/navigation";
 import { useToast } from "../ui/use-toast";
-import { useUser } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 type Props = {
   href: string;
@@ -16,7 +16,7 @@ type Props = {
 const MenuButtons: FC<Props> = ({ href, title, icon }) => {
   const pathname = usePathname();
   const { toast } = useToast();
-  const { user } = useUser();
+  const { user } = useAuth();
 
   const clickHandle = () => {
     if (!user && href !== "/") {

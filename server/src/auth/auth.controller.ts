@@ -22,7 +22,6 @@ import { Types } from 'mongoose';
 import { RecoveryConfirmDto } from './dto/recovery-confirmation.dto';
 import { JwtGuardRecovery } from './guards/jwt-recovery.guard';
 import { RecoveryDto } from './dto/recovery.dto';
-import { MailService } from './services/mail.service';
 
 @Controller('auth')
 export class AuthController {
@@ -41,22 +40,19 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const { user, tokens } = await this.authService.login(loginDto);
-
-    response.cookie(Keys.ACCESS_TOKEN, tokens.access_token, {
-      httpOnly: this.tokenService.isProduction(),
-      expires: this.tokenService.getExpAccessToken(),
-    });
     response.cookie(Keys.REFRESH_TOKEN, tokens.refresh_token, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
       httpOnly: this.tokenService.isProduction(),
+      maxAge: this.tokenService.getExpRefreshToken('msec') as number,
+      secure: this.tokenService.isProduction(),
     });
-    return user;
-  }
-
-  @Get('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie(Keys.ACCESS_TOKEN);
-    response.clearCookie(Keys.REFRESH_TOKEN);
-    return { message: 'success' };
+    response.cookie(Keys.ACCESS_TOKEN, tokens.access_token, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
+      httpOnly: this.tokenService.isProduction(),
+      maxAge: this.tokenService.getExpAccessToken('msec') as number,
+      secure: this.tokenService.isProduction(),
+    });
+    return { user, tokens };
   }
 
   @UseGuards(JwtGuardRefresh)
@@ -65,17 +61,17 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Req() request: AuthorizedRequest,
   ) {
-    const newAccessToken = await this.tokenService.generateToken(
-      { ...request.user, _id: new Types.ObjectId(request.user._id) },
-      'access',
-    );
-
-    response.cookie(Keys.ACCESS_TOKEN, newAccessToken, {
-      httpOnly: this.tokenService.isProduction(),
-      expires: this.tokenService.getExpAccessToken(),
+    const newAccessToken = await this.tokenService.generateToken('access', {
+      ...request.user,
+      _id: new Types.ObjectId(request.user._id),
     });
-
-    return { message: 'success' };
+    response.cookie(Keys.ACCESS_TOKEN, newAccessToken, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
+      maxAge: this.tokenService.getExpAccessToken('msec') as number,
+      httpOnly: this.tokenService.isProduction(),
+      secure: this.tokenService.isProduction(),
+    });
+    return { [Keys.ACCESS_TOKEN]: newAccessToken };
   }
 
   @Post('recovery')
@@ -87,16 +83,27 @@ export class AuthController {
     const recoveryToken = await this.authService.recovery(recoveryDto);
 
     response.cookie(Keys.RECOVERY_TOKEN, recoveryToken, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
+      maxAge: this.tokenService.getExpRecoveryToken('msec') as number,
       httpOnly: this.tokenService.isProduction(),
-      expires: this.tokenService.getExpRecoveryToken(),
+      secure: this.tokenService.isProduction(),
     });
-
+    return {
+      [Keys.RECOVERY_TOKEN]: recoveryToken,
+    };
+  }
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie(Keys.ACCESS_TOKEN);
+    response.clearCookie(Keys.REFRESH_TOKEN);
     return {
       message: 'success',
     };
   }
   @UseGuards(JwtGuardRecovery)
   @Post('recovery/confirmation')
+  @HttpCode(HttpStatus.OK)
   async confirmation(
     @Req() request: RecoveryRequest,
     @Res({ passthrough: true }) response: Response,
@@ -110,7 +117,6 @@ export class AuthController {
     response.clearCookie(Keys.RECOVERY_TOKEN);
     response.clearCookie(Keys.ACCESS_TOKEN);
     response.clearCookie(Keys.REFRESH_TOKEN);
-    Keys.RECOVERY_TOKEN;
     return {
       message: 'success',
     };
