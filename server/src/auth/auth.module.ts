@@ -38,6 +38,6 @@ import { JwtRefreshStrategy } from './strategies/JwtRefreshStategy';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  exports: [CryptoService, JwtAccessStrategy],
+  exports: [CryptoService, PassportModule],
 })
 export class AuthModule {}
