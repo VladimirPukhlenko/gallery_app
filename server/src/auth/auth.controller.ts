@@ -95,12 +95,25 @@ export class AuthController {
   @Get('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie(Keys.ACCESS_TOKEN);
-    response.clearCookie(Keys.REFRESH_TOKEN);
+    response.clearCookie(Keys.ACCESS_TOKEN, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
+      httpOnly: this.tokenService.isProduction(),
+      secure: this.tokenService.isProduction(),
+      expires: new Date(0),
+    });
+
+    response.clearCookie(Keys.REFRESH_TOKEN, {
+      sameSite: this.tokenService.isProduction() ? 'none' : 'lax',
+      httpOnly: this.tokenService.isProduction(),
+      secure: this.tokenService.isProduction(),
+      expires: new Date(0),
+    });
+
     return {
       message: 'success',
     };
   }
+
   @UseGuards(JwtGuardRecovery)
   @Post('recovery/confirmation')
   @HttpCode(HttpStatus.OK)
