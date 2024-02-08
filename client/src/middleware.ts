@@ -30,7 +30,7 @@ export const config = {
 
 const refreshTokenVerification = async (token: string) => {
   try {
-    const res = await fetch(`${API_URL}/auth/refresh`, {
+    const res = await fetch(`${API_URL}/auth/refresh?type=validate`, {
       headers: {
         Cookie: `refresh_token=${token};`,
       },

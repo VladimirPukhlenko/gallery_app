@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -60,7 +61,11 @@ export class AuthController {
   async refresh(
     @Res({ passthrough: true }) response: Response,
     @Req() request: AuthorizedRequest,
+    @Query('type') type?: string,
   ) {
+    if (type === 'validate') {
+      return { message: 'success' };
+    }
     const newAccessToken = await this.tokenService.generateToken('access', {
       ...request.user,
       _id: new Types.ObjectId(request.user._id),
